@@ -5,6 +5,7 @@ import { delay } from './utils';
 
 export const tacit = async () => {
     // todo: these are readonly, it might matter
+    // todo: actions can be defined elsewhere
     const sortedActions = [...ACTIONS].sort(function (
         { priority: a },
         { priority: b }
@@ -22,8 +23,6 @@ export const tacit = async () => {
         const elements = document.querySelectorAll<HTMLElement>(
             action.selector
         );
-
-        console.log(action.selector, elements);
 
         if (elements.length === 0) {
             console.warn('[tacit] No element matches for rule:', action);
@@ -49,103 +48,124 @@ interface TriggeredSelection {
     value: string;
 }
 
+interface TriggeredCheckbox {
+    selector: string;
+    checked: boolean;
+}
+
 interface TriggeredClick {
     selector: string;
+    delayMs: number | null;
 }
 
 const ACTIONS: TriggeredAction[] = [
     {
         kind: 'input',
         priority: 1,
-        selector: `input[autocomplete="cc-number"]`,
+        selector: 'input[autocomplete="cc-number"]',
         value: STRIPE_TEST_CARDS.visa.number,
     },
     {
         kind: 'input',
         priority: 1,
-        selector: `input[autocomplete="cc-exp"]`,
+        selector: 'input[autocomplete="cc-exp"]',
         value: `${STRIPE_TEST_CARDS.visa.expMonth} / ${STRIPE_TEST_CARDS.visa.expYear}`,
     },
     {
         kind: 'input',
         priority: 1,
-        selector: `input[autocomplete="cc-csc"]`,
+        selector: 'input[autocomplete="cc-csc"]',
         value: STRIPE_TEST_CARDS.visa.cvc,
     },
     {
         kind: 'input',
         priority: 1,
-        selector: `input[autocomplete="cc-name"]`,
+        selector: 'input[autocomplete="cc-name"]',
         value: STRIPE_TEST_CARDS.visa.fullName,
     },
     {
         kind: 'input',
         priority: 1,
-        selector: `input[autocomplete="shipping email"]`,
+        selector:
+            'input[autocomplete="shipping email"], input[autocomplete="billing email"]',
         value: PEOPLE.basic.baseEmail,
     },
     {
         kind: 'input',
         priority: 1,
-        selector: `input[autocomplete="shipping given-name"]`,
+        selector:
+            'input[autocomplete="shipping given-name"], input[autocomplete="billing given-name"]',
         value: PEOPLE.basic.firstName,
     },
     {
         kind: 'input',
         priority: 1,
-        selector: `input[autocomplete="shipping family-name"]`,
+        selector:
+            'input[autocomplete="shipping family-name"], input[autocomplete="billing family-name"]',
         value: PEOPLE.basic.lastName,
     },
     {
         kind: 'input',
         priority: 1,
-        selector: `input#shipping-address1`,
+        selector: 'input#shipping-address1, input#billing-address1',
         value: ADDRESSES.basic.address1,
     },
     {
         kind: 'input',
         priority: 1,
-        selector: `input[autocomplete="shipping address-line2"]`,
+        selector:
+            'input[autocomplete="shipping address-line2"], input[autocomplete="billing address-line2"]',
         value: ADDRESSES.basic.address2,
     },
     {
         kind: 'input',
         priority: 1,
-        selector: `input[autocomplete="shipping address-level2"]`,
+        selector:
+            'input[autocomplete="shipping address-level2"], input[autocomplete="billing address-level2"]',
         value: ADDRESSES.basic.city,
     },
     {
         kind: 'input',
         priority: 1,
-        selector: `input[autocomplete="shipping postal-code"]`,
+        selector:
+            'input[autocomplete="shipping postal-code"], input[autocomplete="billing postal-code"]',
         value: ADDRESSES.basic.postalCode,
     },
     {
         kind: 'select',
         priority: 0,
-        selector: 'select[autocomplete="shipping country"]',
+        selector:
+            'select[autocomplete="shipping country"], select[autocomplete="billing country"]',
         value: 'CA',
     },
     {
         kind: 'select',
         priority: 1,
-        selector: 'select[autocomplete="shipping address-level1"]',
+        selector:
+            'select[autocomplete="shipping address-level1"], select[autocomplete="billing address-level1"]',
         value: 'AB',
     },
     {
         kind: 'click',
         priority: 2,
-        /** On Shopify checkout, it seems to switch between Form1 and Form3,
-         *  no pattern for this is obvious, but the discount code input is within
+        /** On Shopify checkout, it seems to switch between Form1, Form3, Form4, etc.
+         *  No pattern for this is obvious, but the discount code input is within
          *  Form0 consistently, so neither clash with it
          *  */
-        selector:
-            'form#Form1 button[type="submit"], form#Form3 button[type="submit"]',
+        selector: 'form[id^="Form"]:not([id="Form0"]) button[type="submit"]',
+        delayMs: 150,
+    },
+    {
+        kind: 'checkbox',
+        priority: 0,
+        selector: 'input#RememberMe-RememberMeCheckbox',
+        checked: false,
     },
     {
         kind: 'click',
         priority: 1,
-        selector: 'input#RememberMe-RememberMeCheckbox',
+        selector: 'input#billing_address_selector-shipping',
+        delayMs: null,
     },
 ];
 
@@ -156,24 +176,25 @@ type TriggeredAction = { kind: string; priority: number | null } & (
     | ({ kind: 'input' } & TriggeredInput)
     | ({ kind: 'select' } & TriggeredSelection)
     | ({ kind: 'click' } & TriggeredClick)
+    | ({ kind: 'checkbox' } & TriggeredCheckbox)
 );
-type KindOfAction = TriggeredAction['kind'];
+// type KindOfAction = TriggeredAction['kind'];
 
 // todo: find some better solution
-type HandleActionArgs = { kind: KindOfAction } & (
-    | {
-          element: HTMLInputElement;
-          action: TriggeredInput;
-      }
-    | {
-          element: HTMLSelectElement;
-          action: TriggeredSelection;
-      }
-    | {
-          element: HTMLElement;
-          action: TriggeredClick;
-      }
-);
+// type HandleActionArgs = { kind: KindOfAction } & (
+//     | {
+//           element: HTMLInputElement;
+//           action: TriggeredInput;
+//       }
+//     | {
+//           element: HTMLSelectElement;
+//           action: TriggeredSelection;
+//       }
+//     | {
+//           element: HTMLElement;
+//           action: TriggeredClick;
+//       }
+// );
 
 const handleAction = <T extends HTMLElement>({
     action,
@@ -183,7 +204,8 @@ const handleAction = <T extends HTMLElement>({
     element: T;
 }) => {
     if (action.kind === 'input') {
-        fillInput({ element, value: action.value });
+        // @ts-expect-error - ignore for now
+        handleInput({ element, value: action.value });
         return;
     }
 
@@ -197,18 +219,30 @@ const handleAction = <T extends HTMLElement>({
             );
             return;
         }
-        selectOption({ selectElement: element, optionElement });
+        // @ts-expect-error - ignore for now
+        handleSelection({ selectElement: element, optionElement });
         return;
     }
 
     if (action.kind === 'click') {
-        console.log('CLICK', element);
-        element.click();
+        handleClick({
+            element,
+            delayMs: action.delayMs,
+        });
+        return;
+    }
+
+    if (action.kind === 'checkbox') {
+        handleCheckbox({
+            // @ts-expect-error - ignore for now
+            element,
+            checked: action.checked,
+        });
         return;
     }
 };
 
-const fillInput = ({
+const handleInput = ({
     element,
     value,
 }: {
@@ -220,7 +254,7 @@ const fillInput = ({
     element.dispatchEvent(new Event('change', { bubbles: true }));
 };
 
-const selectOption = ({
+const handleSelection = ({
     selectElement,
     optionElement,
 }: {
@@ -231,4 +265,30 @@ const selectOption = ({
     selectElement.value = optionElement.value;
     selectElement.dispatchEvent(new Event('input', { bubbles: true }));
     selectElement.dispatchEvent(new Event('change', { bubbles: true }));
+};
+
+const handleClick = ({
+    element,
+    delayMs,
+}: {
+    element: HTMLElement;
+    delayMs: number | null;
+}) => {
+    if (delayMs !== null) {
+        delay(delayMs).then(() => element.click());
+        return;
+    }
+    element.click();
+};
+
+const handleCheckbox = ({
+    element,
+    checked,
+}: {
+    element: HTMLInputElement;
+    checked: boolean;
+}) => {
+    element.checked = checked;
+    element.dispatchEvent(new Event('input', { bubbles: true }));
+    element.dispatchEvent(new Event('change', { bubbles: true }));
 };

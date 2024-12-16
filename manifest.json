@@ -2,13 +2,22 @@
     "manifest_version": 2,
     "name": "Tacit",
     "version": "1.0",
-
+    "permissions": ["activeTab", "scripting", "tabs"],
     "description": "Automatically fill in forms (specific to a Shopify development flow for now).",
-
     "icons": {
         "48": "src/assets/img.png"
     },
-
+    "commands": {
+        "run-actions": {
+            "suggested_key": {
+                "default": "Ctrl+Shift+L"
+            },
+            "description": "Run configured actions on all frames of the current tab."
+        }
+    },
+    "background": {
+        "scripts": ["background.ts"]
+    },
     "content_scripts": [
         {
             "matches": ["*://*/*"],
