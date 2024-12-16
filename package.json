@@ -8,12 +8,15 @@
     "scripts": {
         "start": "parcel watch manifest.json --host localhost --config @parcel/config-webextension",
         "build": "parcel build manifest.json --config @parcel/config-webextension",
+        "clear": "rm -rf dist && rm -rf .parcel-cache",
+        "ship": "yarn clear && yarn build",
         "lint": "tsc && eslint && yarn prettier . --check",
         "fix": "yarn prettier . --write"
     },
     "devDependencies": {
         "@eslint/js": "^9.17.0",
         "@parcel/config-webextension": "^2.13.2",
+        "@types/firefox-webext-browser": "^120.0.4",
         "eslint": "^9.17.0",
         "globals": "^15.13.0",
         "parcel": "^2.13.2",
