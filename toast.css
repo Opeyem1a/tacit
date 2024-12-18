@@ -1,0 +1,35 @@
+div#tacit-extension-toast {
+    min-width: 20rem;
+    border-radius: 8px;
+    padding: 16px;
+
+    cursor: pointer;
+
+    /* put it on top */
+    z-index: 999;
+
+    /* make the text look nice */
+    font-size: 14px;
+    font-family: 'Helvetica Neue', Helvetica, sans-serif;
+    line-height: 127%;
+    color: #1b1b1b;
+
+    /* make the background slightly see through and blurred */
+    background-color: #ffffffdd;
+    backdrop-filter: blur(10px);
+    border: 1px solid #0000001a;
+
+    /* place in the bottom right */
+    position: fixed;
+    bottom: 2rem;
+    left: 2rem;
+
+    /* organize nested text properly */
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    & .title {
+        font-weight: 600;
+    }
+}

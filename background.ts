@@ -13,7 +13,10 @@ browser.commands.onCommand.addListener(async (command) => {
         }
 
         await browser.tabs.sendMessage(currentTab.id, {
-            command: 'run-actions',
+            command: COMMANDS.RUN,
+        });
+        await browser.tabs.sendMessage(currentTab.id, {
+            command: COMMANDS.TOAST_RUNNING,
         });
     }
 });
