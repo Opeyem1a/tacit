@@ -5,7 +5,7 @@
     "permissions": ["activeTab", "scripting", "tabs"],
     "description": "Automatically fill in forms (specific to a Shopify development flow for now).",
     "icons": {
-        "48": "src/assets/img.png"
+        "48": "src/assets/tacit.png"
     },
     "commands": {
         "run-actions": {
