@@ -23,6 +23,11 @@
             "matches": ["*://*/*"],
             "all_frames": true,
             "js": ["content-scripts.ts"]
+        },
+        {
+            "matches": ["*://*/*"],
+            "js": ["display-toast.ts"]
         }
-    ]
+    ],
+    "web_accessible_resources": ["toast.css"]
 }
