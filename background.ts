@@ -1,22 +1,24 @@
-import { COMMANDS } from './src/common/constants';
+import { COMMANDS, MESSAGE_KEYS } from './src/common/constants';
+import { getCurrentTab } from './src/core/utils';
 
 browser.commands.onCommand.addListener(async (command) => {
     if (command === COMMANDS.RUN) {
-        const tabs = await browser.tabs.query({
-            active: true,
-            currentWindow: true,
-        });
-
-        const currentTab = tabs[0];
-        if (!currentTab) {
-            console.warn('[tacit] No current tab detected');
-        }
-
+        const currentTab = await getCurrentTab();
         await browser.tabs.sendMessage(currentTab.id, {
-            command: COMMANDS.RUN,
+            key: MESSAGE_KEYS.RUN,
         });
         await browser.tabs.sendMessage(currentTab.id, {
-            command: COMMANDS.TOAST_RUNNING,
+            key: MESSAGE_KEYS.TOAST_RUNNING,
+        });
+    }
+});
+
+browser.runtime.onMessage.addListener(async (message) => {
+    if (message.key === MESSAGE_KEYS.TOAST_SHOULD_UPDATE) {
+        const currentTab = await getCurrentTab();
+        await browser.tabs.sendMessage(currentTab.id, {
+            key: MESSAGE_KEYS.TOAST_WILL_UPDATE,
+            progress: message.progress,
         });
     }
 });

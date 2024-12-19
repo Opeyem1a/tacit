@@ -3,7 +3,14 @@ import { PEOPLE } from './data/people';
 import { ADDRESSES } from './data/addresses';
 import { delay } from './utils';
 
-export const tacit = async () => {
+export const tacit = async ({
+    updateProgress,
+}: {
+    updateProgress: (args: {
+        complete: number;
+        total: number;
+    }) => Promise<void>;
+}) => {
     // todo: these are readonly, it might matter
     // todo: actions can be defined elsewhere
     const sortedActions = [...ACTIONS].sort(function (
@@ -19,6 +26,7 @@ export const tacit = async () => {
         return a - b;
     });
 
+    let completedActionCount = 0;
     for (const action of sortedActions) {
         const elements = document.querySelectorAll<HTMLElement>(
             action.selector
@@ -26,6 +34,11 @@ export const tacit = async () => {
 
         if (elements.length === 0) {
             console.warn('[tacit] No element matches for rule:', action);
+            await updateProgress({
+                complete: ++completedActionCount,
+                total: sortedActions.length,
+            });
+            await delay(25);
             continue;
         }
 
@@ -33,7 +46,11 @@ export const tacit = async () => {
             handleAction({ action, element });
         }
         // small delay to avoid tripping on itself
-        await delay(23);
+        await updateProgress({
+            complete: ++completedActionCount,
+            total: sortedActions.length,
+        });
+        await delay(25);
     }
 };
 
