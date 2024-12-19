@@ -1,6 +1,6 @@
 type EventListenerDefinition<K extends keyof HTMLElementEventMap> = {
     type: K;
-    listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any;
+    listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => unknown;
     options?: boolean | AddEventListenerOptions;
 };
 

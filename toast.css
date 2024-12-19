@@ -1,18 +1,21 @@
 div#tacit-extension-toast {
-    min-width: 20rem;
-    border-radius: 8px;
-    padding: 16px;
+    --border-radius: 8px;
+    --color-primary: #ff00c8;
+    --color-dark: #1b1b1b;
+
+    animation: fade-in-slide-in 250ms;
+
+    min-width: 10rem;
+    border-radius: var(--border-radius);
+    padding: 12px;
 
     cursor: pointer;
 
-    /* put it on top */
-    z-index: 999;
-
     /* make the text look nice */
-    font-size: 14px;
-    font-family: 'Helvetica Neue', Helvetica, sans-serif;
+    font-size: 12px;
+    font-family: monospace;
     line-height: 127%;
-    color: #1b1b1b;
+    color: var(--color-dark);
 
     /* make the background slightly see through and blurred */
     background-color: #ffffffdd;
@@ -22,14 +25,64 @@ div#tacit-extension-toast {
     /* place in the bottom right */
     position: fixed;
     bottom: 2rem;
-    left: 2rem;
+    right: 2rem;
 
     /* organize nested text properly */
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
+}
 
-    & .title {
-        font-weight: 600;
+div#tacit-extension-toast[data-remove] {
+    --duration: 300ms;
+    animation: fade-out-slide-out var(--duration) forwards;
+}
+
+h4 {
+    font-size: 10px;
+    font-weight: 600;
+    margin: 0;
+}
+
+div.loader {
+    border-radius: var(--border-radius);
+    height: 0.6rem;
+    width: 100%;
+    background-color: #0001;
+}
+
+div.loader span.loader-progress {
+    --progress: 25%;
+    border-radius: var(--border-radius);
+    transition: width ease-out 300ms;
+    background-color: var(--color-primary);
+    height: 100%;
+    width: var(--progress);
+    display: block;
+}
+
+@keyframes fade-in-slide-in {
+    0% {
+        opacity: 0;
+        transform: translateY(3rem) translateX(3rem) rotate(-15deg);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) translateX(0) rotate(0);
+    }
+}
+
+@keyframes fade-out-slide-out {
+    0% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    30% {
+        opacity: 1;
+        transform: translateX(-0.5rem);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(3rem);
     }
 }
