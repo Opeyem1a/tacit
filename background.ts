@@ -1,24 +1,32 @@
-import { COMMANDS, MESSAGE_KEYS } from './src/common/constants';
-import { getCurrentTab } from './src/core/utils';
+import { COMMANDS, TacitMessage } from './src/common/constants';
+import { getCurrentTabId, typed } from './src/core/utils';
 
 browser.commands.onCommand.addListener(async (command) => {
     if (command === COMMANDS.RUN) {
-        const currentTab = await getCurrentTab();
-        await browser.tabs.sendMessage(currentTab.id, {
-            key: MESSAGE_KEYS.RUN,
-        });
-        await browser.tabs.sendMessage(currentTab.id, {
-            key: MESSAGE_KEYS.TOAST_RUNNING,
-        });
+        const currentTab = await getCurrentTabId();
+
+        await browser.tabs.sendMessage(
+            currentTab,
+            typed<TacitMessage>({ key: 'START' })
+        );
+
+        await browser.tabs.sendMessage(
+            currentTab,
+            typed<TacitMessage>({ key: 'TOAST_SHOW' })
+        );
     }
 });
 
-browser.runtime.onMessage.addListener(async (message) => {
-    if (message.key === MESSAGE_KEYS.TOAST_SHOULD_UPDATE) {
-        const currentTab = await getCurrentTab();
-        await browser.tabs.sendMessage(currentTab.id, {
-            key: MESSAGE_KEYS.TOAST_WILL_UPDATE,
-            progress: message.progress,
-        });
+browser.runtime.onMessage.addListener(async (message: TacitMessage) => {
+    if (message.key === 'TOAST_UPDATE_INTENT') {
+        const currentTab = await getCurrentTabId();
+        await browser.tabs.sendMessage(
+            currentTab,
+            typed<TacitMessage>({
+                key: 'TOAST_UPDATE',
+                progress: message.progress,
+                frame: message.frame,
+            })
+        );
     }
 });

@@ -1,12 +1,13 @@
 import { tacit } from './src/core/engine';
-import { MESSAGE_KEYS } from './src/common/constants';
+import { TacitMessage } from './src/common/constants';
+import { typed } from './src/core/utils';
 
 const STATE = {
     running: false,
 };
 
-browser.runtime.onMessage.addListener((message) => {
-    if (message.key === MESSAGE_KEYS.RUN) {
+browser.runtime.onMessage.addListener((message: TacitMessage) => {
+    if (message.key === 'START') {
         if (STATE.running) return;
 
         STATE.running = true;
@@ -25,10 +26,15 @@ const updateProgress = async ({
     complete: number;
     total: number;
 }) => {
+    const frame = browser.runtime.getFrameId(window);
     const ratio = total > 0 ? complete / total : 1;
-    const progress = `${ratio * 100}%`;
-    await browser.runtime.sendMessage({
-        key: MESSAGE_KEYS.TOAST_SHOULD_UPDATE,
-        progress,
-    });
+    const progress: `${number}%` = `${ratio * 100}%`;
+
+    await browser.runtime.sendMessage(
+        typed<TacitMessage>({
+            key: 'TOAST_UPDATE_INTENT',
+            progress,
+            frame,
+        })
+    );
 };

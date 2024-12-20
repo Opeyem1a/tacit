@@ -13,6 +13,11 @@
         "allowJs": true,
         "allowSyntheticDefaultImports": true
     },
-    "include": ["./src/**/*"],
+    "include": [
+        "./src/**/*",
+        "background.ts",
+        "content-scripts.ts",
+        "display-toast.ts"
+    ],
     "exclude": ["node_modules"]
 }

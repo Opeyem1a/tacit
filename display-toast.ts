@@ -1,5 +1,5 @@
 import { createElement } from './src/core/elements';
-import { MESSAGE_KEYS } from './src/common/constants';
+import { TacitMessage } from './src/common/constants';
 import { delay } from './src/core/utils';
 
 const TOAST_ELEMENT_ID = 'tacit-extension-toast';
@@ -59,11 +59,16 @@ const createToast = (initialCurrentProgress?: string) => {
 const cleanupToast = async () => {
     await delay(125);
     const shadow = document.querySelector(`div#${SHADOW_HOST_ID}`);
-    if (!shadow) {
+    if (!shadow || !shadow.shadowRoot) {
         return;
     }
 
     const toast = shadow.shadowRoot.querySelector(`div#${TOAST_ELEMENT_ID}`);
+
+    if (!toast) {
+        return;
+    }
+
     toast.setAttribute('data-remove', '1');
     toast.setAttribute(
         'style',
@@ -87,14 +92,19 @@ const updateToast = (currentProgress: `${number}%`) => {
         );
     }
 
-    toast.setAttribute('style', `--progress: ${currentProgress}`);
+    // This will be defined by this point
+    toast!.setAttribute('style', `--progress: ${currentProgress}`);
 };
 
 const getOrCreateShadowHost = (): ShadowRoot => {
     const body = document.querySelector('body');
+    if (!body) {
+        throw new Error('[tacit]: <body> element could not be found');
+    }
 
     const oldShadowHost = document.querySelector(`div#${SHADOW_HOST_ID}`);
-    if (oldShadowHost) {
+    // todo: what if the shadow root isn't there but the element is
+    if (oldShadowHost && oldShadowHost.shadowRoot) {
         return oldShadowHost.shadowRoot;
     }
 
@@ -102,6 +112,7 @@ const getOrCreateShadowHost = (): ShadowRoot => {
         tag: 'div',
         attributes: { id: SHADOW_HOST_ID, style: 'z-index: 9999999999;' },
     });
+
     body.appendChild(host);
     const shadow = host.attachShadow({ mode: 'open' });
 
@@ -120,13 +131,21 @@ const getOrCreateShadowHost = (): ShadowRoot => {
     return shadow;
 };
 
-browser.runtime.onMessage.addListener(async (message) => {
-    if (message.key === MESSAGE_KEYS.TOAST_RUNNING) {
+const PROGRESS_STATE: Record<number, string> = {};
+
+browser.runtime.onMessage.addListener(async (message: TacitMessage) => {
+    if (message.key === 'TOAST_SHOW') {
         createToast();
     }
-    if (message.key === MESSAGE_KEYS.TOAST_WILL_UPDATE) {
+    if (message.key === 'TOAST_UPDATE') {
+        PROGRESS_STATE[message.frame] = message.progress;
         updateToast(message.progress);
-        if (message.progress === '100%') {
+
+        const allFramesAreComplete = Object.values(PROGRESS_STATE).every(
+            (progress) => progress === '100%'
+        );
+
+        if (allFramesAreComplete) {
             await cleanupToast();
         }
     }
