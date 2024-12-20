@@ -131,22 +131,27 @@ const getOrCreateShadowHost = (): ShadowRoot => {
     return shadow;
 };
 
-const PROGRESS_STATE: Record<number, string> = {};
+const PROGRESS_STATE: Record<number, Record<number, string>> = {};
 
 browser.runtime.onMessage.addListener(async (message: TacitMessage) => {
     if (message.key === 'TOAST_SHOW') {
         createToast();
     }
     if (message.key === 'TOAST_UPDATE') {
-        PROGRESS_STATE[message.frame] = message.progress;
+        if (!(message.instance in PROGRESS_STATE)) {
+            PROGRESS_STATE[message.instance] = {};
+        }
+
+        PROGRESS_STATE[message.instance][message.frame] = message.progress;
         updateToast(message.progress);
 
-        const allFramesAreComplete = Object.values(PROGRESS_STATE).every(
-            (progress) => progress === '100%'
-        );
+        const allFramesAreComplete = Object.values(
+            PROGRESS_STATE[message.instance]
+        ).every((progress) => progress === '100%');
 
         if (allFramesAreComplete) {
             await cleanupToast();
+            delete PROGRESS_STATE[message.instance];
         }
     }
 });

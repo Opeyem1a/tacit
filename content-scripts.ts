@@ -13,16 +13,22 @@ browser.runtime.onMessage.addListener((message: TacitMessage) => {
         STATE.running = true;
         console.info('[tacit] Running...');
 
-        tacit({ updateProgress }).then(() => {
+        tacit({
+            updateProgress: (args) =>
+                // every updateProgress call should pass the same instance to the underlying helper
+                updateProgress({ ...args, instance: message.instance }),
+        }).then(() => {
             STATE.running = false;
         });
     }
 });
 
 const updateProgress = async ({
+    instance,
     complete,
     total,
 }: {
+    instance: number;
     complete: number;
     total: number;
 }) => {
@@ -33,6 +39,7 @@ const updateProgress = async ({
     await browser.runtime.sendMessage(
         typed<TacitMessage>({
             key: 'TOAST_UPDATE_INTENT',
+            instance,
             progress,
             frame,
         })

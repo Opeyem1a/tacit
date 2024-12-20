@@ -31,7 +31,7 @@ export const tacit = async ({
             complete: completedActionCount,
             total: sortedActions.length,
         });
-        await delay(25);
+        await delay(15);
     };
 
     let completedActionCount = 0;
@@ -173,7 +173,7 @@ const ACTIONS: TriggeredAction[] = [
          *  Form0 consistently, so neither clash with it
          *  */
         selector: 'form[id^="Form"]:not([id="Form0"]) button[type="submit"]',
-        delayMs: 300,
+        delayMs: 150,
     },
     {
         kind: 'checkbox',
