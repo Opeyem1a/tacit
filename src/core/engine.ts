@@ -11,20 +11,18 @@ export const tacit = async ({
         total: number;
     }) => Promise<void>;
 }) => {
-    // todo: these are readonly, it might matter
     // todo: actions can be defined elsewhere
-    const sortedActions = [...ACTIONS].sort(function (
-        { priority: a },
-        { priority: b }
-    ) {
-        /**
-         * Always sort null priorities to the beginning of the list
-         * i.e. [null, null, 0, 1, 10000, -100, -1, null] becomes [ null, null, null, -100, -1, 0, 1, 10000 ]
-         */
-        if (a === null) return -1;
-        if (b === null) return 1;
-        return a - b;
-    });
+    const sortedActions: readonly TriggeredAction[] = [...ACTIONS].sort(
+        function ({ priority: a }, { priority: b }) {
+            /**
+             * Always sort null priorities to the beginning of the list
+             * i.e. [null, null, 0, 1, 10000, -100, -1, null] becomes [ null, null, null, -100, -1, 0, 1, 10000 ]
+             */
+            if (a === null) return -1;
+            if (b === null) return 1;
+            return a - b;
+        }
+    );
 
     const afterAction = async (completedActionCount: number) => {
         await updateProgress({
@@ -48,7 +46,11 @@ export const tacit = async ({
             }
 
             for (const element of elements) {
-                handleAction({ action, element });
+                handleAction({
+                    kind: action.kind,
+                    action,
+                    element,
+                } as HandleActionArgs);
             }
             await afterAction(++completedActionCount);
         } catch (error) {
@@ -198,65 +200,63 @@ type TriggeredAction = { kind: string; priority: number | null } & (
     | ({ kind: 'click' } & TriggeredClick)
     | ({ kind: 'checkbox' } & TriggeredCheckbox)
 );
-// type KindOfAction = TriggeredAction['kind'];
+type KindOfAction = TriggeredAction['kind'];
 
-// todo: find some better solution
-// type HandleActionArgs = { kind: KindOfAction } & (
-//     | {
-//           element: HTMLInputElement;
-//           action: TriggeredInput;
-//       }
-//     | {
-//           element: HTMLSelectElement;
-//           action: TriggeredSelection;
-//       }
-//     | {
-//           element: HTMLElement;
-//           action: TriggeredClick;
-//       }
-// );
+type HandleActionArgs = { kind: KindOfAction } & (
+    | {
+          kind: 'input';
+          element: HTMLInputElement;
+          action: TriggeredInput;
+      }
+    | {
+          kind: 'select';
+          element: HTMLSelectElement;
+          action: TriggeredSelection;
+      }
+    | {
+          kind: 'click';
+          element: HTMLElement;
+          action: TriggeredClick;
+      }
+    | {
+          kind: 'checkbox';
+          element: HTMLInputElement;
+          action: TriggeredCheckbox;
+      }
+);
 
-const handleAction = <T extends HTMLElement>({
-    action,
-    element,
-}: {
-    action: TriggeredAction;
-    element: T;
-}) => {
-    if (action.kind === 'input') {
-        // @ts-expect-error - ignore for now
-        handleInput({ element, value: action.value });
+const handleAction = (params: HandleActionArgs) => {
+    if (params.kind === 'input') {
+        handleInput({ element: params.element, value: params.action.value });
         return;
     }
 
-    if (action.kind === 'select') {
-        const optionElement = element.querySelector<HTMLOptionElement>(
-            `option[value="${action.value}"]`
+    if (params.kind === 'select') {
+        const optionElement = params.element.querySelector<HTMLOptionElement>(
+            `option[value="${params.action.value}"]`
         );
         if (!optionElement) {
             console.warn(
-                `[tacit] Could not find select option matching the value "${action.value}", skipping action`
+                `[tacit] Could not find select option matching the value "${params.action.value}", skipping action`
             );
             return;
         }
-        // @ts-expect-error - ignore for now
-        handleSelection({ selectElement: element, optionElement });
+        handleSelection({ selectElement: params.element, optionElement });
         return;
     }
 
-    if (action.kind === 'click') {
+    if (params.kind === 'click') {
         handleClick({
-            element,
-            delayMs: action.delayMs,
+            element: params.element,
+            delayMs: params.action.delayMs,
         });
         return;
     }
 
-    if (action.kind === 'checkbox') {
+    if (params.kind === 'checkbox') {
         handleCheckbox({
-            // @ts-expect-error - ignore for now
-            element,
-            checked: action.checked,
+            element: params.element,
+            checked: params.action.checked,
         });
         return;
     }
