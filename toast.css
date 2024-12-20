@@ -1,7 +1,10 @@
 div#tacit-extension-toast {
-    --border-radius: 8px;
+    --border-radius: 6px;
     --color-primary: #ff00c8;
-    --color-dark: #1b1b1b;
+    --color-text: #1b1b1b;
+    --color-bg: #ffffffdd;
+    --color-border: #0000001a;
+    --color-loader-bg: #0001;
 
     animation: fade-in-slide-in 250ms;
 
@@ -15,12 +18,12 @@ div#tacit-extension-toast {
     font-size: 12px;
     font-family: monospace;
     line-height: 127%;
-    color: var(--color-dark);
+    color: var(--color-text);
 
     /* make the background slightly see through and blurred */
-    background-color: #ffffffdd;
+    background-color: var(--color-bg);
     backdrop-filter: blur(10px);
-    border: 1px solid #0000001a;
+    border: 1px solid var(--color-border);
 
     /* place in the bottom right */
     position: fixed;
@@ -31,6 +34,15 @@ div#tacit-extension-toast {
     display: flex;
     flex-direction: column;
     gap: 8px;
+}
+
+@media (prefers-color-scheme: dark) {
+    div#tacit-extension-toast {
+        --color-text: #fff;
+        --color-bg: #1b1b1bdd;
+        --color-border: #ffffff1a;
+        --color-loader-bg: #fff1;
+    }
 }
 
 div#tacit-extension-toast[data-remove] {
@@ -48,7 +60,7 @@ div.loader {
     border-radius: var(--border-radius);
     height: 0.4rem;
     width: 100%;
-    background-color: #0001;
+    background-color: var(--color-loader-bg);
 }
 
 div.loader span.loader-progress {
