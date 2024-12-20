@@ -4,17 +4,13 @@ import { delay } from './src/core/utils';
 
 const TOAST_ELEMENT_ID = 'tacit-extension-toast';
 const SHADOW_HOST_ID = 'tacit-shadow';
-// todo: don't do this if tacit is still running though
-const AUTO_REMOVE_TIME_MS = 10_000;
 
-const createToast = (initialCurrentProgress?: string) => {
+const createToast = (instance: number, initialCurrentProgress?: string) => {
     const oldShadowHost = document.querySelector(`div#${SHADOW_HOST_ID}`);
     if (oldShadowHost) {
         oldShadowHost.remove();
     }
     const shadow = getOrCreateShadowHost();
-
-    setTimeout(() => cleanupToast(), AUTO_REMOVE_TIME_MS);
 
     shadow.appendChild(
         createElement({
@@ -103,9 +99,15 @@ const getOrCreateShadowHost = (): ShadowRoot => {
     }
 
     const oldShadowHost = document.querySelector(`div#${SHADOW_HOST_ID}`);
-    // todo: what if the shadow root isn't there but the element is
     if (oldShadowHost && oldShadowHost.shadowRoot) {
         return oldShadowHost.shadowRoot;
+    }
+
+    /**
+     * If the shadow root isn't there but the element is
+     */
+    if (oldShadowHost && !oldShadowHost.shadowRoot) {
+        oldShadowHost.remove();
     }
 
     const host = createElement({
@@ -135,8 +137,9 @@ const PROGRESS_STATE: Record<number, Record<number, string>> = {};
 
 browser.runtime.onMessage.addListener(async (message: TacitMessage) => {
     if (message.key === 'TOAST_SHOW') {
-        createToast();
+        createToast(message.instance);
     }
+
     if (message.key === 'TOAST_UPDATE') {
         if (!(message.instance in PROGRESS_STATE)) {
             PROGRESS_STATE[message.instance] = {};
@@ -145,11 +148,11 @@ browser.runtime.onMessage.addListener(async (message: TacitMessage) => {
         PROGRESS_STATE[message.instance][message.frame] = message.progress;
         updateToast(message.progress);
 
-        const allFramesAreComplete = Object.values(
+        const allFramesAreCompleteForInstance = Object.values(
             PROGRESS_STATE[message.instance]
         ).every((progress) => progress === '100%');
 
-        if (allFramesAreComplete) {
+        if (allFramesAreCompleteForInstance) {
             await cleanupToast();
             delete PROGRESS_STATE[message.instance];
         }
