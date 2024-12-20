@@ -1,7 +1,13 @@
-import { STRIPE_TEST_CARDS } from './data/stripe-test-cards';
-import { PEOPLE } from './data/people';
-import { ADDRESSES } from './data/addresses';
 import { delay } from './utils';
+import {
+    ACTIONS,
+    KindOfAction,
+    TriggeredAction,
+    TriggeredCheckbox,
+    TriggeredClick,
+    TriggeredInput,
+    TriggeredSelection,
+} from './actions';
 
 export const tacit = async ({
     updateProgress,
@@ -11,7 +17,6 @@ export const tacit = async ({
         total: number;
     }) => Promise<void>;
 }) => {
-    // todo: actions can be defined elsewhere
     const sortedActions: readonly TriggeredAction[] = [...ACTIONS].sort(
         function ({ priority: a }, { priority: b }) {
             /**
@@ -58,149 +63,6 @@ export const tacit = async ({
         }
     }
 };
-
-interface TriggeredInput {
-    selector: string;
-    value: string;
-}
-
-interface TriggeredSelection {
-    // selector for the <select /> itself
-    selector: string;
-    value: string;
-}
-
-interface TriggeredCheckbox {
-    selector: string;
-    checked: boolean;
-}
-
-interface TriggeredClick {
-    selector: string;
-    delayMs: number | null;
-}
-
-const ACTIONS: TriggeredAction[] = [
-    {
-        kind: 'input',
-        priority: 1,
-        selector: 'input[autocomplete="cc-number"]',
-        value: STRIPE_TEST_CARDS.visa.number,
-    },
-    {
-        kind: 'input',
-        priority: 1,
-        selector: 'input[autocomplete="cc-exp"]',
-        value: `${STRIPE_TEST_CARDS.visa.expMonth} / ${STRIPE_TEST_CARDS.visa.expYear}`,
-    },
-    {
-        kind: 'input',
-        priority: 1,
-        selector: 'input[autocomplete="cc-csc"]',
-        value: STRIPE_TEST_CARDS.visa.cvc,
-    },
-    {
-        kind: 'input',
-        priority: 1,
-        selector: 'input[autocomplete="cc-name"]',
-        value: STRIPE_TEST_CARDS.visa.fullName,
-    },
-    {
-        kind: 'input',
-        priority: 1,
-        selector:
-            'input[autocomplete="shipping email"], input[autocomplete="billing email"]',
-        value: PEOPLE.basic.baseEmail,
-    },
-    {
-        kind: 'input',
-        priority: 1,
-        selector:
-            'input[autocomplete="shipping given-name"], input[autocomplete="billing given-name"]',
-        value: PEOPLE.basic.firstName,
-    },
-    {
-        kind: 'input',
-        priority: 1,
-        selector:
-            'input[autocomplete="shipping family-name"], input[autocomplete="billing family-name"]',
-        value: PEOPLE.basic.lastName,
-    },
-    {
-        kind: 'input',
-        priority: 1,
-        selector: 'input#shipping-address1, input#billing-address1',
-        value: ADDRESSES.basic.address1,
-    },
-    {
-        kind: 'input',
-        priority: 1,
-        selector:
-            'input[autocomplete="shipping address-line2"], input[autocomplete="billing address-line2"]',
-        value: ADDRESSES.basic.address2,
-    },
-    {
-        kind: 'input',
-        priority: 1,
-        selector:
-            'input[autocomplete="shipping address-level2"], input[autocomplete="billing address-level2"]',
-        value: ADDRESSES.basic.city,
-    },
-    {
-        kind: 'input',
-        priority: 1,
-        selector:
-            'input[autocomplete="shipping postal-code"], input[autocomplete="billing postal-code"]',
-        value: ADDRESSES.basic.postalCode,
-    },
-    {
-        kind: 'select',
-        priority: 0,
-        selector:
-            'select[autocomplete="shipping country"], select[autocomplete="billing country"]',
-        value: 'CA',
-    },
-    {
-        kind: 'select',
-        priority: 1,
-        selector:
-            'select[autocomplete="shipping address-level1"], select[autocomplete="billing address-level1"]',
-        value: 'AB',
-    },
-    {
-        kind: 'click',
-        priority: 2,
-        /** On Shopify checkout, it seems to switch between Form1, Form3, Form4, etc.
-         *  No pattern for this is obvious, but the discount code input is within
-         *  Form0 consistently, so neither clash with it
-         *  */
-        selector: 'form[id^="Form"]:not([id="Form0"]) button[type="submit"]',
-        delayMs: 150,
-    },
-    {
-        kind: 'checkbox',
-        priority: 0,
-        selector: 'input#RememberMe-RememberMeCheckbox',
-        checked: false,
-    },
-    {
-        kind: 'click',
-        priority: 1,
-        selector: 'input#billing_address_selector-shipping',
-        delayMs: null,
-    },
-];
-
-/**
- * priority - must be a positive integer
- */
-type TriggeredAction = { kind: string; priority: number | null } & (
-    | ({ kind: 'input' } & TriggeredInput)
-    | ({ kind: 'select' } & TriggeredSelection)
-    | ({ kind: 'click' } & TriggeredClick)
-    | ({ kind: 'checkbox' } & TriggeredCheckbox)
-);
-type KindOfAction = TriggeredAction['kind'];
 
 type HandleActionArgs = { kind: KindOfAction } & (
     | {
