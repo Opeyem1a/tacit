@@ -2,9 +2,15 @@ export const COMMANDS = {
     RUN: 'run-actions',
 };
 
-export const MESSAGE_KEYS = {
-    RUN: 'run-actions',
-    TOAST_RUNNING: 'show-toast::running',
-    TOAST_SHOULD_UPDATE: 'show-toast::update-intent',
-    TOAST_WILL_UPDATE: 'show-toast::update',
-};
+export interface ToastUpdatePayload {
+    progress: `${number}%`;
+    frame: number;
+}
+
+export type TacitMessage = { key: string } & (
+    | { key: 'START' }
+    | { key: 'TOAST_SHOW' }
+    | ({ key: 'TOAST_UPDATE_INTENT' } & ToastUpdatePayload)
+    | ({ key: 'TOAST_UPDATE' } & ToastUpdatePayload)
+);
+export type MessageKey = TacitMessage['key'];

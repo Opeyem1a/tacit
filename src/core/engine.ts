@@ -26,31 +26,34 @@ export const tacit = async ({
         return a - b;
     });
 
-    let completedActionCount = 0;
-    for (const action of sortedActions) {
-        const elements = document.querySelectorAll<HTMLElement>(
-            action.selector
-        );
-
-        if (elements.length === 0) {
-            console.warn('[tacit] No element matches for rule:', action);
-            await updateProgress({
-                complete: ++completedActionCount,
-                total: sortedActions.length,
-            });
-            await delay(25);
-            continue;
-        }
-
-        for (const element of elements) {
-            handleAction({ action, element });
-        }
-        // small delay to avoid tripping on itself
+    const afterAction = async (completedActionCount: number) => {
         await updateProgress({
-            complete: ++completedActionCount,
+            complete: completedActionCount,
             total: sortedActions.length,
         });
         await delay(25);
+    };
+
+    let completedActionCount = 0;
+    for (const action of sortedActions) {
+        try {
+            const elements = document.querySelectorAll<HTMLElement>(
+                action.selector
+            );
+
+            if (elements.length === 0) {
+                console.warn('[tacit] No element matches for rule:', action);
+                await afterAction(++completedActionCount);
+                continue;
+            }
+
+            for (const element of elements) {
+                handleAction({ action, element });
+            }
+            await afterAction(++completedActionCount);
+        } catch (error) {
+            console.error(`[tacit] Error: ${error}`);
+        }
     }
 };
 
@@ -170,7 +173,7 @@ const ACTIONS: TriggeredAction[] = [
          *  Form0 consistently, so neither clash with it
          *  */
         selector: 'form[id^="Form"]:not([id="Form0"]) button[type="submit"]',
-        delayMs: 150,
+        delayMs: 300,
     },
     {
         kind: 'checkbox',
