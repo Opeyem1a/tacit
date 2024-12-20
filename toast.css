@@ -46,7 +46,7 @@ h4 {
 
 div.loader {
     border-radius: var(--border-radius);
-    height: 0.6rem;
+    height: 0.4rem;
     width: 100%;
     background-color: #0001;
 }
