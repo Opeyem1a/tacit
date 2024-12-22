@@ -75,14 +75,14 @@ const cleanupToast = async () => {
     shadow.remove();
 };
 
-const updateToast = (currentProgress: `${number}%`) => {
+const updateToast = (instance: number, currentProgress: `${number}%`) => {
     const shadow = getOrCreateShadowHost();
     let toast = shadow.querySelector(
         `div#${TOAST_ELEMENT_ID} span.loader-progress`
     );
 
     if (!toast) {
-        createToast(currentProgress);
+        createToast(instance, currentProgress);
         toast = shadow.querySelector(
             `div#${TOAST_ELEMENT_ID} span.loader-progress`
         );
@@ -146,7 +146,7 @@ browser.runtime.onMessage.addListener(async (message: TacitMessage) => {
         }
 
         PROGRESS_STATE[message.instance][message.frame] = message.progress;
-        updateToast(message.progress);
+        updateToast(message.instance, message.progress);
 
         const allFramesAreCompleteForInstance = Object.values(
             PROGRESS_STATE[message.instance]
