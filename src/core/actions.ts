@@ -19,16 +19,28 @@ export interface TriggeredClick {
     delayMs: number | null;
 }
 
+export type BaseAction = { kind: string; priority: number | null };
 /**
  * priority - must be a positive integer
  */
-export type TriggeredAction = { kind: string; priority: number | null } & (
-    | ({ kind: 'input' } & TriggeredInput)
-    | ({ kind: 'select' } & TriggeredSelection)
-    | ({ kind: 'click' } & TriggeredClick)
-    | ({ kind: 'checkbox' } & TriggeredCheckbox)
-);
+export type TriggeredAction = BaseAction &
+    (
+        | ({ kind: 'input' } & TriggeredInput)
+        | ({ kind: 'select' } & TriggeredSelection)
+        | ({ kind: 'click' } & TriggeredClick)
+        | ({ kind: 'checkbox' } & TriggeredCheckbox)
+    );
 export type KindOfAction = TriggeredAction['kind'];
+
+/**
+ * This should be the entire list of possible options (used in validation)
+ */
+export const ACTION_KINDS: KindOfAction[] = [
+    'input',
+    'select',
+    'click',
+    'checkbox',
+];
 
 const FAKE_DATA = {
     address1: '123 Fake Street',
