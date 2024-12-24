@@ -50,46 +50,46 @@ export const ACTIONS: readonly TriggeredAction[] = [
     {
         kind: 'input',
         priority: 1,
-        selector: 'input[autocomplete="cc-number"]',
+        selector: "input[autocomplete='cc-number']",
         value: FAKE_DATA.creditCardNumber,
     },
     {
         kind: 'input',
         priority: 1,
-        selector: 'input[autocomplete="cc-exp"]',
+        selector: "input[autocomplete='cc-exp']",
         value: `${FAKE_DATA.creditCardExpMonth} / ${FAKE_DATA.creditCardExpYear}`,
     },
     {
         kind: 'input',
         priority: 1,
-        selector: 'input[autocomplete="cc-csc"]',
+        selector: "input[autocomplete='cc-csc']",
         value: FAKE_DATA.creditCardCvc,
     },
     {
         kind: 'input',
         priority: 1,
-        selector: 'input[autocomplete="cc-name"]',
+        selector: "input[autocomplete='cc-name']",
         value: `${FAKE_DATA.firstName} ${FAKE_DATA.lastName}`,
     },
     {
         kind: 'input',
         priority: 1,
         selector:
-            'input[autocomplete="shipping email"], input[autocomplete="billing email"]',
+            "input[autocomplete='shipping email'], input[autocomplete='billing email']",
         value: FAKE_DATA.baseEmail, // fixme: make this change?
     },
     {
         kind: 'input',
         priority: 1,
         selector:
-            'input[autocomplete="shipping given-name"], input[autocomplete="billing given-name"]',
+            "input[autocomplete='shipping given-name'], input[autocomplete='billing given-name']",
         value: FAKE_DATA.firstName,
     },
     {
         kind: 'input',
         priority: 1,
         selector:
-            'input[autocomplete="shipping family-name"], input[autocomplete="billing family-name"]',
+            "input[autocomplete='shipping family-name'], input[autocomplete='billing family-name']",
         value: FAKE_DATA.lastName,
     },
     {
@@ -102,35 +102,35 @@ export const ACTIONS: readonly TriggeredAction[] = [
         kind: 'input',
         priority: 1,
         selector:
-            'input[autocomplete="shipping address-line2"], input[autocomplete="billing address-line2"]',
+            "input[autocomplete='shipping address-line2'], input[autocomplete='billing address-line2']",
         value: FAKE_DATA.address2,
     },
     {
         kind: 'input',
         priority: 1,
         selector:
-            'input[autocomplete="shipping address-level2"], input[autocomplete="billing address-level2"]',
+            "input[autocomplete='shipping address-level2'], input[autocomplete='billing address-level2']",
         value: FAKE_DATA.city,
     },
     {
         kind: 'input',
         priority: 1,
         selector:
-            'input[autocomplete="shipping postal-code"], input[autocomplete="billing postal-code"]',
+            "input[autocomplete='shipping postal-code'], input[autocomplete='billing postal-code']",
         value: FAKE_DATA.postalCode,
     },
     {
         kind: 'select',
         priority: 0,
         selector:
-            'select[autocomplete="shipping country"], select[autocomplete="billing country"]',
+            "select[autocomplete='shipping country'], select[autocomplete='billing country']",
         value: FAKE_DATA.countryCode,
     },
     {
         kind: 'select',
         priority: 1,
         selector:
-            'select[autocomplete="shipping address-level1"], select[autocomplete="billing address-level1"]',
+            "select[autocomplete='shipping address-level1'], select[autocomplete='billing address-level1']",
         value: FAKE_DATA.zone,
     },
     {
@@ -140,7 +140,7 @@ export const ACTIONS: readonly TriggeredAction[] = [
          *  No pattern for this is obvious, but the discount code input is within
          *  Form0 consistently, so neither clash with it
          *  */
-        selector: 'form[id^="Form"]:not([id="Form0"]) button[type="submit"]',
+        selector: "form[id^='Form']:not([id='Form0']) button[type='submit']",
         delayMs: 150,
     },
     {

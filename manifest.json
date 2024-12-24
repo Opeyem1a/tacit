@@ -2,10 +2,16 @@
     "manifest_version": 2,
     "name": "Tacit",
     "version": "1.0",
-    "permissions": ["activeTab", "scripting", "tabs"],
-    "description": "Automatically fill in forms (specific to a Shopify development flow for now).",
+    "permissions": ["activeTab", "scripting", "storage", "tabs"],
+    "description": "Automatically fill in forms with dummy data while doing development on local/staging environments (tailored to a Shopify development flow for now).",
     "icons": {
         "48": "src/assets/tacit.png"
+    },
+    "browser_specific_settings": {
+        "gecko": {
+            "id": "addon@example.com",
+            "strict_min_version": "42.0"
+        }
     },
     "commands": {
         "run-actions": {
@@ -17,6 +23,10 @@
     },
     "background": {
         "scripts": ["background.ts"]
+    },
+    "options_ui": {
+        "page": "src/ui/options/index.html",
+        "browser_style": false
     },
     "content_scripts": [
         {
