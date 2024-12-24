@@ -9,6 +9,6 @@ export default [
     pluginJs.configs.recommended,
     ...tseslint.configs.recommended,
     {
-        ignores: ['dist/*', '.parcel-cache/*', 'node_modules/*', '**/.*'],
+        ignores: ['dist/*', '.parcel-cache/*', 'node_modules/*', '**/.*', "tailwind.config.js"],
     },
 ];

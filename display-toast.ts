@@ -13,7 +13,7 @@ const createToast = (instance: number, initialCurrentProgress?: string) => {
     const shadow = getOrCreateShadowHost();
 
     shadow.appendChild(
-        createElement({
+        createElement<'div'>({
             tag: 'div',
             attributes: {
                 id: TOAST_ELEMENT_ID,
@@ -28,17 +28,17 @@ const createToast = (instance: number, initialCurrentProgress?: string) => {
                 },
             ],
             children: [
-                createElement({
+                createElement<'h4'>({
                     tag: 'h4',
                     children: ['tacit'],
                 }),
-                createElement({
+                createElement<'div'>({
                     tag: 'div',
                     attributes: {
                         classNames: 'loader',
                     },
                     children: [
-                        createElement({
+                        createElement<'span'>({
                             tag: 'span',
                             attributes: {
                                 classNames: 'loader-progress',
@@ -110,7 +110,7 @@ const getOrCreateShadowHost = (): ShadowRoot => {
         oldShadowHost.remove();
     }
 
-    const host = createElement({
+    const host = createElement<'div'>({
         tag: 'div',
         attributes: { id: SHADOW_HOST_ID, style: 'z-index: 9999999999;' },
     });
@@ -120,7 +120,7 @@ const getOrCreateShadowHost = (): ShadowRoot => {
 
     const stylesheetLink = browser.runtime.getURL('toast.css');
     shadow.appendChild(
-        createElement({
+        createElement<'link'>({
             tag: 'link',
             attributes: {
                 rel: 'stylesheet',

@@ -1,4 +1,4 @@
-import { delay } from './utils';
+import { delay, sortActions } from './utils';
 import {
     ACTIONS,
     KindOfAction,
@@ -17,17 +17,7 @@ export const tacit = async ({
         total: number;
     }) => Promise<void>;
 }) => {
-    const sortedActions: readonly TriggeredAction[] = [...ACTIONS].sort(
-        function ({ priority: a }, { priority: b }) {
-            /**
-             * Always sort null priorities to the beginning of the list
-             * i.e. [null, null, 0, 1, 10000, -100, -1, null] becomes [ null, null, null, -100, -1, 0, 1, 10000 ]
-             */
-            if (a === null) return -1;
-            if (b === null) return 1;
-            return a - b;
-        }
-    );
+    const sortedActions: readonly TriggeredAction[] = sortActions(ACTIONS);
 
     const afterAction = async (completedActionCount: number) => {
         await updateProgress({
