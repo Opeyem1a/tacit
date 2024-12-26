@@ -1,6 +1,14 @@
 import { createElement } from '../../core/elements';
 import { ACTIONS, TriggeredAction } from '../../core/actions';
 import { sortActions } from '../../core/utils';
+import {
+    assertActionCheckboxIsValid,
+    assertActionClickIsValid,
+    assertActionInputIsValid,
+    assertActionKindIsValid,
+    assertActionPriorityIsValid,
+    assertActionSelectIsValid,
+} from '../../core/assertions';
 
 window.addEventListener('load', async () => {
     const root = document.getElementById('root');
@@ -150,14 +158,12 @@ const getActions = async (): Promise<readonly TriggeredAction[]> => {
         return ACTIONS;
     }
 
-    // todo: handle edge case - what if only 1 action is somehow sus instead of the whole array? can we just prune that 1?
-    const result = safeParseActions(tacitActions);
-
-    if (!result.success) {
-        return [];
-    }
-
-    return result.data;
+    /**
+     * Only return the valid actions
+     */
+    return tacitActions.filter((action) => {
+        return safeParseAction(action).success;
+    });
 };
 
 // const setActions = async (_actions: TriggeredAction[]) => {
@@ -176,14 +182,42 @@ const getActions = async (): Promise<readonly TriggeredAction[]> => {
 type SafeParseResult<T, E> =
     | { success: true; data: T }
     | { success: false; error: E };
-const safeParseActions = (
-    _actions: unknown
-): SafeParseResult<TriggeredAction[], string> => {
-    const actions = _actions as TriggeredAction[];
-    // todo: actually do validation
+const safeParseAction = (
+    _action: unknown
+): SafeParseResult<TriggeredAction, string> => {
+    try {
+        assertActionKindIsValid(_action);
+        assertActionPriorityIsValid(_action);
+
+        if (_action.kind === 'input') {
+            assertActionInputIsValid(_action);
+        }
+
+        if (_action.kind === 'select') {
+            assertActionSelectIsValid(_action);
+        }
+
+        if (_action.kind === 'click') {
+            assertActionClickIsValid(_action);
+        }
+
+        if (_action.kind === 'checkbox') {
+            assertActionCheckboxIsValid(_action);
+        }
+    } catch (error) {
+        console.error(`[tacit] Safe parse error - ${error}`);
+        return {
+            success: false,
+            error,
+        };
+    }
+
     return {
         success: true,
-        data: actions,
+        /**
+         * @unsafe 'as'
+         */
+        data: _action as TriggeredAction,
     };
 };
 
