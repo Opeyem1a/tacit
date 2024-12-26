@@ -1,14 +1,17 @@
-import { createElement } from '../../core/elements';
+import { createElement, observed, combine, when } from '../../core/elements';
 import { ACTIONS, TriggeredAction } from '../../core/actions';
-import { sortActions } from '../../core/utils';
+import { formatJsonString, sortActions } from '../../core/utils';
 import {
     assertActionCheckboxIsValid,
     assertActionClickIsValid,
     assertActionInputIsValid,
+    assertActionIsObject,
     assertActionKindIsValid,
     assertActionPriorityIsValid,
     assertActionSelectIsValid,
 } from '../../core/assertions';
+import { Wrapper } from './components/wrapper';
+import { Button, disable, enable } from './components/button';
 
 window.addEventListener('load', async () => {
     const root = document.getElementById('root');
@@ -21,100 +24,212 @@ window.addEventListener('load', async () => {
 });
 
 const component = ({ actions }: { actions: readonly TriggeredAction[] }) => {
+    const initialActions = formatJsonString(actions);
+    const formIsDirty = observed<boolean>(false);
+    const formIsSubmitting = observed<boolean>(false);
+    const formIsValidating = observed<boolean>(false);
+    const formErrors = observed<string[]>([]);
+    const currentActionsString = observed<string>('');
+
+    const buttonState = combine({
+        formIsDirty,
+        formIsSubmitting,
+        formIsValidating,
+        formErrors,
+    });
+
+    let textareaRef: HTMLTextAreaElement;
+
+    currentActionsString.setValue(initialActions);
+
+    when(currentActionsString).changes((value) => {
+        formIsDirty.setValue(initialActions !== currentActionsString.value);
+        validateForm(value);
+    });
+
+    function validateForm(actionsString: string): string[] {
+        formIsValidating.setValue(true);
+        try {
+            JSON.parse(actionsString);
+        } catch {
+            const _errors = ['Must be a valid JSON'];
+            formErrors.setValue(_errors);
+            formIsValidating.setValue(false);
+            return _errors;
+        }
+
+        const actions: unknown = JSON.parse(actionsString);
+        if (!Array.isArray(actions)) {
+            const _errors = ['Must be an array'];
+            formErrors.setValue(_errors);
+            formIsValidating.setValue(false);
+            return _errors;
+        }
+
+        const _errors = [];
+        actions.forEach((_action) => {
+            const safe = safeParseAction(_action);
+            if (!safe.success) {
+                _errors.push(safe.error);
+            }
+        });
+
+        const MAX_ACTIONS = 50;
+        if (actions.length > MAX_ACTIONS) {
+            _errors.push(
+                `You may only define up to ${MAX_ACTIONS} actions at once.`
+            );
+        }
+        formErrors.setValue(_errors);
+        formIsValidating.setValue(false);
+        return _errors;
+    }
+
     return createElement<'form'>({
         tag: 'form',
         children: [
-            createElement<'div'>({
-                tag: 'div',
-                attributes: {
-                    classNames: 'flex flex-col py-4 px-4 gap-4',
-                },
-                children: [
+            Wrapper('flex flex-col py-4 px-4 gap-4', [
+                Wrapper('flex gap-3', [
+                    Wrapper('rounded-lg w-4 bg-[#ff00c8]', []),
+                    Wrapper('flex flex-col gap-1', [
+                        createElement<'label'>({
+                            tag: 'label',
+                            attributes: {
+                                classNames: 'text-base font-medium',
+                            },
+                            children: ['Configured actions'],
+                        }),
+                        createElement<'p'>({
+                            tag: 'p',
+                            attributes: {
+                                classNames: 'text-sm text-gray-700',
+                            },
+                            children: [
+                                `
+                                This array defines the "actions" that will be attempted by Tacit
+                                when the command is run. I haven't gotten around to writing any 
+                                docs yet, but if the schema makes sense to you then have fun
+                                (it has validation and won't let you save something wonky).
+                                `,
+                            ],
+                        }),
+                        Wrapper(
+                            'flex justify-between items-center gap-2 mt-2',
+                            [
+                                Button({
+                                    text: 'Reset to default (Shopify checkout)',
+                                    variant: 'info',
+                                    initiallyDisabled: false,
+                                    postInit: (element) => {
+                                        when(buttonState).changes((value) => {
+                                            if (
+                                                !value.formIsSubmitting &&
+                                                !value.formIsValidating
+                                            ) {
+                                                disable(element);
+                                            } else {
+                                                enable(element);
+                                            }
+                                        });
+                                    },
+                                    onClick: () => {
+                                        textareaRef.value = formatJsonString(
+                                            sortActions(ACTIONS)
+                                        );
+                                        textareaRef.dispatchEvent(
+                                            new Event('input')
+                                        );
+                                    },
+                                }),
+                                Wrapper('flex gap-2', [
+                                    Button({
+                                        text: 'Discard',
+                                        variant: 'secondary',
+                                        initiallyDisabled: true,
+                                        postInit: (element) => {
+                                            when(buttonState).changes(
+                                                (value) => {
+                                                    if (
+                                                        !value.formIsSubmitting &&
+                                                        !value.formIsValidating &&
+                                                        value.formIsDirty
+                                                    ) {
+                                                        disable(element);
+                                                    } else {
+                                                        enable(element);
+                                                    }
+                                                }
+                                            );
+                                        },
+                                        onClick: () => {
+                                            textareaRef.value = initialActions;
+                                            textareaRef.dispatchEvent(
+                                                new Event('input')
+                                            );
+                                        },
+                                    }),
+                                    Button({
+                                        text: 'Save',
+                                        variant: 'primary',
+                                        initiallyDisabled: true,
+                                        postInit: (element) => {
+                                            when(buttonState).changes(
+                                                (value) => {
+                                                    if (
+                                                        !value.formErrors
+                                                            .length &&
+                                                        !value.formIsSubmitting &&
+                                                        !value.formIsValidating &&
+                                                        value.formIsDirty
+                                                    ) {
+                                                        disable(element);
+                                                    } else {
+                                                        enable(element);
+                                                    }
+                                                }
+                                            );
+                                        },
+                                        onClick: async () => {
+                                            const _errors = validateForm(
+                                                currentActionsString.value
+                                            );
+                                            if (_errors.length) return;
+
+                                            formIsSubmitting.setValue(true);
+                                            await setActions(
+                                                JSON.parse(
+                                                    currentActionsString.value
+                                                ) as TriggeredAction[]
+                                            );
+                                            formIsSubmitting.setValue(false);
+                                        },
+                                    }),
+                                ]),
+                            ]
+                        ),
+                    ]),
+                ]),
+                Wrapper('flex flex-col gap-2', [
                     createElement<'div'>({
                         tag: 'div',
                         attributes: {
-                            classNames: 'flex gap-3',
+                            classNames:
+                                'flex flex-col p-3 rounded-md bg-red-200 text-sm text-red-800 hidden',
                         },
-                        children: [
-                            createElement<'div'>({
-                                tag: 'div',
-                                attributes: {
-                                    classNames: 'rounded-lg w-4 bg-[#ff00c8]',
-                                },
-                            }),
-                            createElement<'div'>({
-                                tag: 'div',
-                                attributes: {
-                                    classNames: 'flex flex-col gap-1',
-                                },
-                                children: [
-                                    createElement<'label'>({
-                                        tag: 'label',
-                                        attributes: {
-                                            classNames: 'text-base font-medium',
-                                        },
-                                        children: ['Configured actions'],
-                                    }),
-                                    createElement<'p'>({
-                                        tag: 'p',
-                                        attributes: {
-                                            classNames: 'text-sm text-gray-700',
-                                        },
-                                        children: [
-                                            `
-                                            This array defines the "actions" that will be attempted by Tacit
-                                            when the command is run. I haven't gotten around to writing any 
-                                            docs yet, but if the schema makes sense to you then have fun
-                                            (it has validation and won't let you save something wonky).
-                                            `,
-                                        ],
-                                    }),
-                                    createElement<'div'>({
-                                        tag: 'div',
-                                        attributes: {
-                                            classNames:
-                                                'flex justify-between items-center gap-2 mt-2',
-                                        },
-                                        children: [
-                                            createElement<'button'>({
-                                                tag: 'button',
-                                                attributes: {
-                                                    classNames:
-                                                        'h-9 rounded-md px-3 text-sm text-blue-600 bg-white hover:bg-blue-50/90 transition-colors',
-                                                },
-                                                children: [
-                                                    'Reset to default (Shopify checkout)',
-                                                ],
-                                            }),
-                                            createElement<'div'>({
-                                                tag: 'div',
-                                                attributes: {
-                                                    classNames: 'flex gap-2',
-                                                },
-                                                children: [
-                                                    createElement<'button'>({
-                                                        tag: 'button',
-                                                        attributes: {
-                                                            classNames:
-                                                                'h-9 rounded-md px-3 text-sm bg-white text-gray-900 hover:bg-gray-50/90 transition-colors border border-input',
-                                                        },
-                                                        children: ['Discard'],
-                                                    }),
-                                                    createElement<'button'>({
-                                                        tag: 'button',
-                                                        attributes: {
-                                                            classNames:
-                                                                'h-9 rounded-md px-3 text-sm bg-gray-900 text-gray-50 hover:bg-gray-900/90 transition-colors',
-                                                        },
-                                                        children: ['Save'],
-                                                    }),
-                                                ],
-                                            }),
-                                        ],
-                                    }),
-                                ],
-                            }),
-                        ],
+                        children: [formErrors.value.join('\n')],
+                        effects: {
+                            postInit: (element) => {
+                                when(formErrors).changes((value) => {
+                                    if (!value.length) {
+                                        element.classList.add('hidden');
+                                        return;
+                                    }
+
+                                    element.classList.remove('hidden');
+                                    element.innerText = value.join('\n');
+                                });
+                            },
+                        },
                     }),
                     createElement<'textarea'>({
                         tag: 'textarea',
@@ -124,18 +239,46 @@ const component = ({ actions }: { actions: readonly TriggeredAction[] }) => {
                             classNames:
                                 'text-sm bg-gray-800 text-gray-50 font-mono p-2.5 rounded-xl border border-gray-600',
                         },
+                        events: [
+                            {
+                                type: 'change',
+                                listener: (event) => {
+                                    /**
+                                     * Format the JSON when it changes
+                                     */
+                                    if (!formErrors.value.length) {
+                                        (
+                                            event.target as HTMLTextAreaElement
+                                        ).value = formatJsonString(
+                                            JSON.parse(
+                                                currentActionsString.value
+                                            )
+                                        );
+                                        event.target?.dispatchEvent(
+                                            new Event('input')
+                                        );
+                                    }
+                                },
+                            },
+                            {
+                                type: 'input',
+                                listener: (event) => {
+                                    const value = (
+                                        event.target as HTMLTextAreaElement
+                                    ).value;
+                                    currentActionsString.setValue(value);
+                                },
+                            },
+                        ],
                         effects: {
                             postInit: (element) => {
-                                element.value = JSON.stringify(
-                                    actions,
-                                    undefined,
-                                    2
-                                );
+                                element.value = currentActionsString.value;
+                                textareaRef = element;
                             },
                         },
                     }),
-                ],
-            }),
+                ]),
+            ]),
         ],
     });
 };
@@ -161,23 +304,16 @@ const getActions = async (): Promise<readonly TriggeredAction[]> => {
     /**
      * Only return the valid actions
      */
-    return tacitActions.filter((action) => {
+    return tacitActions.filter((action: unknown) => {
         return safeParseAction(action).success;
     });
 };
 
-// const setActions = async (_actions: TriggeredAction[]) => {
-//     const result = safeParseActions(_actions);
-//
-//     if (!result.success) {
-//         // todo: this is suspect
-//         throw new Error(result.error);
-//     }
-//
-//     await browser.storage.sync.set({
-//         [TACIT_ACTIONS_STORAGE_KEY]: result.data,
-//     });
-// };
+const setActions = async (actions: TriggeredAction[]) => {
+    await browser.storage.sync.set({
+        [TACIT_ACTIONS_STORAGE_KEY]: actions,
+    });
+};
 
 type SafeParseResult<T, E> =
     | { success: true; data: T }
@@ -186,6 +322,7 @@ const safeParseAction = (
     _action: unknown
 ): SafeParseResult<TriggeredAction, string> => {
     try {
+        assertActionIsObject(_action);
         assertActionKindIsValid(_action);
         assertActionPriorityIsValid(_action);
 
@@ -208,7 +345,8 @@ const safeParseAction = (
         console.error(`[tacit] Safe parse error - ${error}`);
         return {
             success: false,
-            error,
+            // @ts-expect-error - it's an error with a message for sure
+            error: String(error.message),
         };
     }
 
@@ -220,10 +358,3 @@ const safeParseAction = (
         data: _action as TriggeredAction,
     };
 };
-
-// const validateActions = (
-//     _actions: unknown
-// ) => {
-//     // todo: safe parse
-//     // todo: extra validations (max number of actions, priorities can't be negative or ludicrous, etc)
-// }

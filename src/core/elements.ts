@@ -4,7 +4,13 @@ type EventListenerDefinition<K extends keyof HTMLElementEventMap> = {
     options?: boolean | AddEventListenerOptions;
 };
 
-type EffectFunc<K extends keyof HTMLElementTagNameMap> = (
+type CustomEventListenerDefinition = {
+    customType: string;
+    customListener: (this: HTMLElement, ev: CustomEvent) => unknown;
+    options?: boolean | AddEventListenerOptions;
+};
+
+export type EffectFunc<K extends keyof HTMLElementTagNameMap> = (
     element: HTMLElementTagNameMap[K],
     props?: CreateElementArgs<K>
 ) => void;
@@ -19,7 +25,10 @@ type CreateElementArgs<K extends keyof HTMLElementTagNameMap> = {
     attributes?: Partial<
         Record<keyof HTMLElementTagNameMap[K] | 'classNames', string>
     >;
-    events?: EventListenerDefinition<keyof HTMLElementEventMap>[];
+    events?: (
+        | EventListenerDefinition<keyof HTMLElementEventMap>
+        | CustomEventListenerDefinition
+    )[];
     children?: (HTMLElement | string | null)[];
     effects?: Effects<K>;
 };
@@ -30,7 +39,7 @@ export const createElement = <T extends keyof HTMLElementTagNameMap>({
     events: _events,
     children: _children,
     effects: _effects,
-}: CreateElementArgs<T>): HTMLElement => {
+}: CreateElementArgs<T>): HTMLElementTagNameMap[T] => {
     const element = document.createElement(tag);
 
     /**
@@ -43,6 +52,12 @@ export const createElement = <T extends keyof HTMLElementTagNameMap>({
     const effects = _effects ?? {};
 
     events.forEach((event) => {
+        if ('customType' in event) {
+            // @ts-expect-error - this is allowed, but typescript really doesn't like it
+            element.addEventListener(event.customType, event.customListener);
+            return;
+        }
+
         element.addEventListener(event.type, event.listener);
     });
 
@@ -88,4 +103,76 @@ const appendChild = (parent: HTMLElement, child: HTMLElement | string) => {
     parent.appendChild(
         typeof child === 'string' ? document.createTextNode(child) : child
     );
+};
+
+type Observer<TValue> = (value: TValue) => void;
+type ObservedValue<TValue> = {
+    value: TValue;
+    setValue: (newValueOrUpdater: TValue | ((prev: TValue) => TValue)) => void;
+    addObserver: (callback: Observer<TValue>) => void;
+};
+
+export const observed = <TValue extends string | number | object | boolean>(
+    initialValue: TValue
+): ObservedValue<TValue> => {
+    let value = initialValue;
+    const observers: Observer<TValue>[] = [];
+
+    function setValue(newValueOrUpdater: TValue | ((prev: TValue) => TValue)) {
+        const newValue =
+            typeof newValueOrUpdater === 'function'
+                ? newValueOrUpdater(value)
+                : newValueOrUpdater;
+        value = newValue;
+        observers.forEach((callback) => {
+            callback(newValue);
+        });
+    }
+
+    function addObserver(callback: Observer<TValue>) {
+        observers.push(callback);
+    }
+
+    return {
+        get value() {
+            return value;
+        },
+        setValue,
+        addObserver,
+    };
+};
+
+/**
+ * Basically pure syntax sugar so the code reads nicer,
+ * I'm testing if this is a helpful pattern, but yes
+ * this is entirely redundant since you can just call
+ * addObserver directly
+ */
+export const when = <TValue>(observedValue: ObservedValue<TValue>) => {
+    return {
+        changes: (callback: Observer<TValue>) => {
+            observedValue.addObserver(callback);
+        },
+    };
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const combine = <TRaw extends Record<string, ObservedValue<any>>>(
+    record: TRaw
+) => {
+    const initialValue = Object.fromEntries(
+        Object.entries(record).map(([name, observedValue]) => {
+            return [name, observedValue.value];
+        })
+    ) as { [K in keyof TRaw]: TRaw[K]['value'] };
+
+    const combined = observed(initialValue);
+
+    Object.entries(record).forEach(([name, observedValue]) => {
+        observedValue.addObserver((value) => {
+            combined.setValue((prev) => ({ ...prev, [name]: value }));
+        });
+    });
+
+    return combined;
 };

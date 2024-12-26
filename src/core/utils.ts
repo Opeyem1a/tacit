@@ -37,3 +37,7 @@ export const sortActions = (
         return a - b;
     });
 };
+
+export const formatJsonString = (data: object) => {
+    return JSON.stringify(data, undefined, 2);
+};
