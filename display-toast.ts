@@ -13,42 +13,42 @@ const createToast = (instance: number, initialCurrentProgress?: string) => {
     const shadow = getOrCreateShadowHost();
 
     shadow.appendChild(
-        createElement<'div'>({
-            tag: 'div',
-            attributes: {
-                id: TOAST_ELEMENT_ID,
-            },
-            events: [
-                {
-                    type: 'click',
-                    listener: (e) => {
-                        e.stopPropagation();
-                        void cleanupToast();
-                    },
+        createElement(
+            'div',
+            {
+                attributes: {
+                    id: TOAST_ELEMENT_ID,
                 },
-            ],
-            children: [
-                createElement<'h4'>({
-                    tag: 'h4',
-                    children: ['tacit'],
-                }),
-                createElement<'div'>({
-                    tag: 'div',
-                    attributes: {
-                        classNames: 'loader',
+                events: [
+                    {
+                        type: 'click',
+                        listener: (e) => {
+                            e.stopPropagation();
+                            void cleanupToast();
+                        },
                     },
-                    children: [
-                        createElement<'span'>({
-                            tag: 'span',
+                ],
+            },
+            [
+                createElement('h4', {}, ['tacit']),
+                createElement(
+                    'div',
+                    {
+                        attributes: {
+                            classNames: 'loader',
+                        },
+                    },
+                    [
+                        createElement('span', {
                             attributes: {
                                 classNames: 'loader-progress',
                                 style: `--progress: ${initialCurrentProgress ?? '0%'}`,
                             },
                         }),
-                    ],
-                }),
-            ],
-        })
+                    ]
+                ),
+            ]
+        )
     );
 };
 
@@ -110,8 +110,7 @@ const getOrCreateShadowHost = (): ShadowRoot => {
         oldShadowHost.remove();
     }
 
-    const host = createElement<'div'>({
-        tag: 'div',
+    const host = createElement('div', {
         attributes: { id: SHADOW_HOST_ID, style: 'z-index: 9999999999;' },
     });
 
@@ -120,8 +119,7 @@ const getOrCreateShadowHost = (): ShadowRoot => {
 
     const stylesheetLink = browser.runtime.getURL('toast.css');
     shadow.appendChild(
-        createElement<'link'>({
-            tag: 'link',
+        createElement('link', {
             attributes: {
                 rel: 'stylesheet',
                 type: 'text/css',

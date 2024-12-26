@@ -21,31 +21,33 @@ export const Button = ({
         info: 'text-blue-600 bg-white hover:bg-blue-50/90 disabled:bg-blue-50/50 disabled:text-blue-600/50',
     } as const;
 
-    return createElement<'button'>({
-        tag: 'button',
-        attributes: {
-            type: 'button',
-            classNames: `${classNames[variant]} h-9 rounded-md px-3 text-sm transition-colors disabled:pointer-events-none disabled:cursor-not-allowed`,
-            ...(initiallyDisabled && { disabled: 'true' }),
-        },
-        children: [text],
-        effects: { postInit },
-        events: [
-            {
-                type: 'click',
-                listener: (e) => {
-                    e.preventDefault();
-                    onClick();
-                },
+    return createElement(
+        'button',
+        {
+            attributes: {
+                type: 'button',
+                classNames: `${classNames[variant]} h-9 rounded-md px-3 text-sm transition-colors disabled:pointer-events-none disabled:cursor-not-allowed`,
+                ...(initiallyDisabled && { disabled: 'true' }),
             },
-        ],
-    });
+            effects: { postInit },
+            events: [
+                {
+                    type: 'click',
+                    listener: (e) => {
+                        e.preventDefault();
+                        onClick();
+                    },
+                },
+            ],
+        },
+        [text]
+    );
 };
 
-export const disable = (element: HTMLElement) => {
+export const disableButton = (element: HTMLElement) => {
     element.removeAttribute('disabled');
 };
 
-export const enable = (element: HTMLElement) => {
+export const enableButton = (element: HTMLElement) => {
     element.setAttribute('disabled', 'true');
 };
