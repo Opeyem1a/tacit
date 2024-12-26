@@ -11,7 +11,7 @@ import {
     assertActionSelectIsValid,
 } from '../../core/assertions';
 import { Wrapper } from './components/wrapper';
-import { Button, disable, enable } from './components/button';
+import { Button, disableButton, enableButton } from './components/button';
 
 window.addEventListener('load', async () => {
     const root = document.getElementById('root');
@@ -85,138 +85,130 @@ const component = ({ actions }: { actions: readonly TriggeredAction[] }) => {
         return _errors;
     }
 
-    return createElement<'form'>({
-        tag: 'form',
-        children: [
-            Wrapper('flex flex-col py-4 px-4 gap-4', [
-                Wrapper('flex gap-3', [
-                    Wrapper('rounded-lg w-4 bg-[#ff00c8]', []),
-                    Wrapper('flex flex-col gap-1', [
-                        createElement<'label'>({
-                            tag: 'label',
+    return createElement('form', {}, [
+        Wrapper('flex flex-col py-4 px-4 gap-4', [
+            Wrapper('flex gap-3', [
+                Wrapper('rounded-lg w-4 bg-[#ff00c8]', []),
+                Wrapper('flex flex-col gap-1', [
+                    createElement(
+                        'label',
+                        {
                             attributes: {
                                 classNames: 'text-base font-medium',
                             },
-                            children: ['Configured actions'],
-                        }),
-                        createElement<'p'>({
-                            tag: 'p',
+                        },
+                        ['Configured actions']
+                    ),
+                    createElement(
+                        'p',
+                        {
                             attributes: {
                                 classNames: 'text-sm text-gray-700',
                             },
-                            children: [
-                                `
+                        },
+                        [
+                            `
                                 This array defines the "actions" that will be attempted by Tacit
                                 when the command is run. I haven't gotten around to writing any 
                                 docs yet, but if the schema makes sense to you then have fun
                                 (it has validation and won't let you save something wonky).
                                 `,
-                            ],
+                        ]
+                    ),
+                    Wrapper('flex justify-between items-center gap-2 mt-2', [
+                        Button({
+                            text: 'Reset to default (Shopify checkout)',
+                            variant: 'info',
+                            initiallyDisabled: false,
+                            postInit: (element) => {
+                                when(buttonState).changes((value) => {
+                                    if (
+                                        !value.formIsSubmitting &&
+                                        !value.formIsValidating
+                                    ) {
+                                        disableButton(element);
+                                    } else {
+                                        enableButton(element);
+                                    }
+                                });
+                            },
+                            onClick: () => {
+                                textareaRef.value = formatJsonString(
+                                    sortActions(ACTIONS)
+                                );
+                                textareaRef.dispatchEvent(new Event('input'));
+                            },
                         }),
-                        Wrapper(
-                            'flex justify-between items-center gap-2 mt-2',
-                            [
-                                Button({
-                                    text: 'Reset to default (Shopify checkout)',
-                                    variant: 'info',
-                                    initiallyDisabled: false,
-                                    postInit: (element) => {
-                                        when(buttonState).changes((value) => {
-                                            if (
-                                                !value.formIsSubmitting &&
-                                                !value.formIsValidating
-                                            ) {
-                                                disable(element);
-                                            } else {
-                                                enable(element);
-                                            }
-                                        });
-                                    },
-                                    onClick: () => {
-                                        textareaRef.value = formatJsonString(
-                                            sortActions(ACTIONS)
-                                        );
-                                        textareaRef.dispatchEvent(
-                                            new Event('input')
-                                        );
-                                    },
-                                }),
-                                Wrapper('flex gap-2', [
-                                    Button({
-                                        text: 'Discard',
-                                        variant: 'secondary',
-                                        initiallyDisabled: true,
-                                        postInit: (element) => {
-                                            when(buttonState).changes(
-                                                (value) => {
-                                                    if (
-                                                        !value.formIsSubmitting &&
-                                                        !value.formIsValidating &&
-                                                        value.formIsDirty
-                                                    ) {
-                                                        disable(element);
-                                                    } else {
-                                                        enable(element);
-                                                    }
-                                                }
-                                            );
-                                        },
-                                        onClick: () => {
-                                            textareaRef.value = initialActions;
-                                            textareaRef.dispatchEvent(
-                                                new Event('input')
-                                            );
-                                        },
-                                    }),
-                                    Button({
-                                        text: 'Save',
-                                        variant: 'primary',
-                                        initiallyDisabled: true,
-                                        postInit: (element) => {
-                                            when(buttonState).changes(
-                                                (value) => {
-                                                    if (
-                                                        !value.formErrors
-                                                            .length &&
-                                                        !value.formIsSubmitting &&
-                                                        !value.formIsValidating &&
-                                                        value.formIsDirty
-                                                    ) {
-                                                        disable(element);
-                                                    } else {
-                                                        enable(element);
-                                                    }
-                                                }
-                                            );
-                                        },
-                                        onClick: async () => {
-                                            const _errors = validateForm(
-                                                currentActionsString.value
-                                            );
-                                            if (_errors.length) return;
+                        Wrapper('flex gap-2', [
+                            Button({
+                                text: 'Discard',
+                                variant: 'secondary',
+                                initiallyDisabled: true,
+                                postInit: (element) => {
+                                    when(buttonState).changes((value) => {
+                                        if (
+                                            !value.formIsSubmitting &&
+                                            !value.formIsValidating &&
+                                            value.formIsDirty
+                                        ) {
+                                            disableButton(element);
+                                        } else {
+                                            enableButton(element);
+                                        }
+                                    });
+                                },
+                                onClick: () => {
+                                    textareaRef.value = initialActions;
+                                    textareaRef.dispatchEvent(
+                                        new Event('input')
+                                    );
+                                },
+                            }),
+                            Button({
+                                text: 'Save',
+                                variant: 'primary',
+                                initiallyDisabled: true,
+                                postInit: (element) => {
+                                    when(buttonState).changes((value) => {
+                                        if (
+                                            !value.formErrors.length &&
+                                            !value.formIsSubmitting &&
+                                            !value.formIsValidating &&
+                                            value.formIsDirty
+                                        ) {
+                                            disableButton(element);
+                                        } else {
+                                            enableButton(element);
+                                        }
+                                    });
+                                },
+                                onClick: async () => {
+                                    const _errors = validateForm(
+                                        currentActionsString.value
+                                    );
+                                    if (_errors.length) return;
 
-                                            formIsSubmitting.setValue(true);
-                                            await setActions(
-                                                JSON.parse(
-                                                    currentActionsString.value
-                                                ) as TriggeredAction[]
-                                            );
-                                            formIsSubmitting.setValue(false);
-                                        },
-                                    }),
-                                ]),
-                            ]
-                        ),
+                                    formIsSubmitting.setValue(true);
+                                    await setActions(
+                                        JSON.parse(
+                                            currentActionsString.value
+                                        ) as TriggeredAction[]
+                                    );
+                                    formIsSubmitting.setValue(false);
+                                },
+                            }),
+                        ]),
                     ]),
                 ]),
-                Wrapper('flex flex-col gap-2', [
-                    createElement<'div'>({
-                        tag: 'div',
+            ]),
+            Wrapper('flex flex-col gap-2', [
+                createElement(
+                    'div',
+                    {
                         attributes: {
                             classNames:
                                 'flex flex-col p-3 rounded-md bg-red-200 text-sm text-red-800 hidden',
                         },
-                        children: [formErrors.value.join('\n')],
                         effects: {
                             postInit: (element) => {
                                 when(formErrors).changes((value) => {
@@ -230,57 +222,55 @@ const component = ({ actions }: { actions: readonly TriggeredAction[] }) => {
                                 });
                             },
                         },
-                    }),
-                    createElement<'textarea'>({
-                        tag: 'textarea',
-                        attributes: {
-                            // the number of lines a single actions takes is ~6, this is a gross approximation + the 2 for []
-                            rows: String(actions.length * 6 + 2),
-                            classNames:
-                                'text-sm bg-gray-800 text-gray-50 font-mono p-2.5 rounded-xl border border-gray-600',
-                        },
-                        events: [
-                            {
-                                type: 'change',
-                                listener: (event) => {
-                                    /**
-                                     * Format the JSON when it changes
-                                     */
-                                    if (!formErrors.value.length) {
-                                        (
-                                            event.target as HTMLTextAreaElement
-                                        ).value = formatJsonString(
-                                            JSON.parse(
-                                                currentActionsString.value
-                                            )
-                                        );
-                                        event.target?.dispatchEvent(
-                                            new Event('input')
-                                        );
-                                    }
-                                },
-                            },
-                            {
-                                type: 'input',
-                                listener: (event) => {
-                                    const value = (
+                    },
+                    [formErrors.value.join('\n')]
+                ),
+                createElement('textarea', {
+                    attributes: {
+                        // the number of lines a single actions takes is ~6, this is a gross approximation + the 2 for []
+                        rows: String(actions.length * 6 + 2),
+                        classNames:
+                            'text-sm bg-gray-800 text-gray-50 font-mono p-2.5 rounded-xl border border-gray-600',
+                    },
+                    events: [
+                        {
+                            type: 'change',
+                            listener: (event) => {
+                                /**
+                                 * Format the JSON when it changes
+                                 */
+                                if (!formErrors.value.length) {
+                                    (
                                         event.target as HTMLTextAreaElement
-                                    ).value;
-                                    currentActionsString.setValue(value);
-                                },
-                            },
-                        ],
-                        effects: {
-                            postInit: (element) => {
-                                element.value = currentActionsString.value;
-                                textareaRef = element;
+                                    ).value = formatJsonString(
+                                        JSON.parse(currentActionsString.value)
+                                    );
+                                    event.target?.dispatchEvent(
+                                        new Event('input')
+                                    );
+                                }
                             },
                         },
-                    }),
-                ]),
+                        {
+                            type: 'input',
+                            listener: (event) => {
+                                const value = (
+                                    event.target as HTMLTextAreaElement
+                                ).value;
+                                currentActionsString.setValue(value);
+                            },
+                        },
+                    ],
+                    effects: {
+                        postInit: (element) => {
+                            element.value = currentActionsString.value;
+                            textareaRef = element;
+                        },
+                    },
+                }),
             ]),
-        ],
-    });
+        ]),
+    ]);
 };
 
 const TACIT_ACTIONS_STORAGE_KEY = 'tacitActions';

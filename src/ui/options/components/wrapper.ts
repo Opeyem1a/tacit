@@ -4,11 +4,13 @@ export const Wrapper = (
     classNames: string,
     children: (HTMLElement | string)[]
 ): HTMLDivElement => {
-    return createElement<'div'>({
-        tag: 'div',
-        attributes: {
-            classNames,
+    return createElement(
+        'div',
+        {
+            attributes: {
+                classNames,
+            },
         },
-        children,
-    });
+        children
+    );
 };

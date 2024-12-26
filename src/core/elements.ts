@@ -20,7 +20,6 @@ type Effects<K extends keyof HTMLElementTagNameMap> = {
 };
 
 type CreateElementArgs<K extends keyof HTMLElementTagNameMap> = {
-    tag: K;
     // fixme: could use conditional types to make sure only the attribute names that extend from string are included (to not include .addEventListener and stuff)
     attributes?: Partial<
         Record<keyof HTMLElementTagNameMap[K] | 'classNames', string>
@@ -29,17 +28,18 @@ type CreateElementArgs<K extends keyof HTMLElementTagNameMap> = {
         | EventListenerDefinition<keyof HTMLElementEventMap>
         | CustomEventListenerDefinition
     )[];
-    children?: (HTMLElement | string | null)[];
     effects?: Effects<K>;
 };
 
-export const createElement = <T extends keyof HTMLElementTagNameMap>({
-    tag,
-    attributes: _attributes,
-    events: _events,
-    children: _children,
-    effects: _effects,
-}: CreateElementArgs<T>): HTMLElementTagNameMap[T] => {
+export const createElement = <T extends keyof HTMLElementTagNameMap>(
+    tag: T,
+    {
+        attributes: _attributes,
+        events: _events,
+        effects: _effects,
+    }: CreateElementArgs<T>,
+    _children?: (HTMLElement | string | null)[]
+): HTMLElementTagNameMap[T] => {
     const element = document.createElement(tag);
 
     /**
@@ -48,8 +48,9 @@ export const createElement = <T extends keyof HTMLElementTagNameMap>({
      */
     const attributes = _attributes ?? {};
     const events = _events ?? [];
-    const children = _children ?? [];
     const effects = _effects ?? {};
+
+    const children = _children ?? [];
 
     events.forEach((event) => {
         if ('customType' in event) {
@@ -83,11 +84,9 @@ export const createElement = <T extends keyof HTMLElementTagNameMap>({
 
     if (effects.postInit) {
         effects.postInit(element, {
-            tag,
             attributes,
             effects,
             events,
-            children,
         });
     }
 
