@@ -5,7 +5,11 @@
     "permissions": ["activeTab", "scripting", "storage", "tabs"],
     "description": "Automatically fill in forms with dummy data while doing development on local/staging environments (tailored to a Shopify development flow for now).",
     "icons": {
-        "48": "src/assets/tacit.png"
+        "16": "src/assets/tacit-16.png",
+        "32": "src/assets/tacit-32.png",
+        "48": "src/assets/tacit-48.png",
+        "64": "src/assets/tacit-64.png",
+        "128": "src/assets/tacit-128.png"
     },
     "browser_specific_settings": {
         "gecko": {
