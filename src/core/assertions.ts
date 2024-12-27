@@ -80,6 +80,9 @@ export function assertActionKeySelectorIsValid(
     if (typeof action.selector !== 'string') {
         throw new Error('Action selector must be a string');
     }
+    if (action.selector === '') {
+        throw new Error('Selector cannot be an empty string');
+    }
 }
 
 export function assertActionKeyValueIsValid(

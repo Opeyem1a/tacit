@@ -1,3 +1,12 @@
+import {
+    assertActionCheckboxIsValid,
+    assertActionClickIsValid,
+    assertActionInputIsValid,
+    assertActionIsObject,
+    assertActionKindIsValid,
+    assertActionPriorityIsValid, assertActionSelectIsValid
+} from "./assertions";
+
 export interface TriggeredInput {
     selector: string;
     value: string;
@@ -168,3 +177,47 @@ export const ACTIONS: readonly TriggeredAction[] = [
         delayMs: null,
     },
 ];
+
+type SafeParseResult<T, E> =
+    | { success: true; data: T }
+    | { success: false; error: E };
+export const safeParseAction = (
+    _action: unknown
+): SafeParseResult<TriggeredAction, string> => {
+    try {
+        assertActionIsObject(_action);
+        assertActionKindIsValid(_action);
+        assertActionPriorityIsValid(_action);
+
+        if (_action.kind === 'input') {
+            assertActionInputIsValid(_action);
+        }
+
+        if (_action.kind === 'select') {
+            assertActionSelectIsValid(_action);
+        }
+
+        if (_action.kind === 'click') {
+            assertActionClickIsValid(_action);
+        }
+
+        if (_action.kind === 'checkbox') {
+            assertActionCheckboxIsValid(_action);
+        }
+    } catch (error) {
+        console.error(`[tacit] Safe parse error - ${error}`);
+        return {
+            success: false,
+            // @ts-expect-error - it's an error with a message for sure
+            error: String(error.message),
+        };
+    }
+
+    return {
+        success: true,
+        /**
+         * @unsafe 'as'
+         */
+        data: _action as TriggeredAction,
+    };
+};
