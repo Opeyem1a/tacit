@@ -71,7 +71,7 @@ export function assertActionCheckboxIsValid(
     assertActionKeyCheckedIsValid(action);
 }
 
-function assertActionKeySelectorIsValid(
+export function assertActionKeySelectorIsValid(
     action: object
 ): asserts action is { selector: string } {
     if (!('selector' in action)) {
@@ -82,7 +82,7 @@ function assertActionKeySelectorIsValid(
     }
 }
 
-function assertActionKeyValueIsValid(
+export function assertActionKeyValueIsValid(
     action: object
 ): asserts action is { value: string } {
     if (!('value' in action)) {
@@ -93,7 +93,7 @@ function assertActionKeyValueIsValid(
     }
 }
 
-function assertActionKeyDelayMsIsValid(
+export function assertActionKeyDelayMsIsValid(
     action: object
 ): asserts action is { delayMs: number | null } {
     if (!('delayMs' in action)) {
@@ -112,7 +112,7 @@ function assertActionKeyDelayMsIsValid(
     }
 }
 
-function assertActionKeyCheckedIsValid(
+export function assertActionKeyCheckedIsValid(
     action: object
 ): asserts action is { checked: boolean } {
     if (!('checked' in action)) {
