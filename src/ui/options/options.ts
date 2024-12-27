@@ -1,15 +1,6 @@
 import { createElement, observed, combine, when } from '../../core/elements';
-import { ACTIONS, TriggeredAction } from '../../core/actions';
+import { ACTIONS, safeParseAction, TriggeredAction } from '../../core/actions';
 import { formatJsonString, sortActions } from '../../core/utils';
-import {
-    assertActionCheckboxIsValid,
-    assertActionClickIsValid,
-    assertActionInputIsValid,
-    assertActionIsObject,
-    assertActionKindIsValid,
-    assertActionPriorityIsValid,
-    assertActionSelectIsValid,
-} from '../../core/assertions';
 import { Wrapper } from './components/wrapper';
 import { Button, disableButton, enableButton } from './components/button';
 
@@ -303,48 +294,4 @@ const setActions = async (actions: TriggeredAction[]) => {
     await browser.storage.sync.set({
         [TACIT_ACTIONS_STORAGE_KEY]: actions,
     });
-};
-
-type SafeParseResult<T, E> =
-    | { success: true; data: T }
-    | { success: false; error: E };
-const safeParseAction = (
-    _action: unknown
-): SafeParseResult<TriggeredAction, string> => {
-    try {
-        assertActionIsObject(_action);
-        assertActionKindIsValid(_action);
-        assertActionPriorityIsValid(_action);
-
-        if (_action.kind === 'input') {
-            assertActionInputIsValid(_action);
-        }
-
-        if (_action.kind === 'select') {
-            assertActionSelectIsValid(_action);
-        }
-
-        if (_action.kind === 'click') {
-            assertActionClickIsValid(_action);
-        }
-
-        if (_action.kind === 'checkbox') {
-            assertActionCheckboxIsValid(_action);
-        }
-    } catch (error) {
-        console.error(`[tacit] Safe parse error - ${error}`);
-        return {
-            success: false,
-            // @ts-expect-error - it's an error with a message for sure
-            error: String(error.message),
-        };
-    }
-
-    return {
-        success: true,
-        /**
-         * @unsafe 'as'
-         */
-        data: _action as TriggeredAction,
-    };
 };

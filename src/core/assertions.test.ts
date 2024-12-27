@@ -54,6 +54,9 @@ describe('action assertions validate properly', () => {
         ).to.throw();
 
         expect(() =>
+            assertActionPriorityIsValid({ priority: null })
+        ).to.not.throw();
+        expect(() =>
             assertActionPriorityIsValid({ priority: 0 })
         ).to.not.throw();
         expect(() =>
@@ -180,7 +183,7 @@ describe('action assertions validate properly', () => {
             assertActionInputIsValid({
                 kind: 'input',
                 priority: 1,
-                selector: '',
+                selector: 'input',
                 value: '',
             } as BaseAction)
         ).to.not.throw();
@@ -188,7 +191,7 @@ describe('action assertions validate properly', () => {
             assertActionInputIsValid({
                 kind: 'input',
                 priority: 1,
-                selector: '',
+                selector: 'input',
                 value: '',
                 extraProperty: 'anything',
             } as BaseAction)
@@ -200,7 +203,7 @@ describe('action assertions validate properly', () => {
             assertActionSelectIsValid({
                 kind: 'select',
                 priority: 1,
-                selector: '',
+                selector: 'select',
                 value: '',
             } as BaseAction)
         ).to.not.throw();
@@ -208,7 +211,7 @@ describe('action assertions validate properly', () => {
             assertActionSelectIsValid({
                 kind: 'select',
                 priority: 1,
-                selector: '',
+                selector: 'select',
                 value: '',
                 extraProperty: 'anything',
             } as BaseAction)
@@ -220,7 +223,7 @@ describe('action assertions validate properly', () => {
             assertActionCheckboxIsValid({
                 kind: 'checkbox',
                 priority: 1,
-                selector: '',
+                selector: 'input',
                 checked: true,
             } as BaseAction)
         ).to.not.throw();
@@ -228,7 +231,7 @@ describe('action assertions validate properly', () => {
             assertActionCheckboxIsValid({
                 kind: 'checkbox',
                 priority: 1,
-                selector: '',
+                selector: 'input',
                 checked: true,
                 extraProperty: 'anything',
             } as BaseAction)
@@ -240,7 +243,7 @@ describe('action assertions validate properly', () => {
             assertActionClickIsValid({
                 kind: 'click',
                 priority: 1,
-                selector: '',
+                selector: 'div',
                 delayMs: null,
             } as BaseAction)
         ).to.not.throw();
@@ -248,7 +251,7 @@ describe('action assertions validate properly', () => {
             assertActionClickIsValid({
                 kind: 'click',
                 priority: 1,
-                selector: '',
+                selector: 'div',
                 delayMs: 100,
             } as BaseAction)
         ).to.not.throw();
@@ -256,7 +259,7 @@ describe('action assertions validate properly', () => {
             assertActionClickIsValid({
                 kind: 'click',
                 priority: 1,
-                selector: '',
+                selector: 'div',
                 delayMs: 100,
                 extraProperty: 'anything',
             } as BaseAction)
