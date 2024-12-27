@@ -26,7 +26,10 @@ describe('safe parsing actions behaves expectedly', () => {
         };
         expect(safeParseAction(action1).success).to.equal(true);
         expect(safeParseAction(action1)).to.haveOwnProperty('data');
-        expect(safeParseAction(action1)['data']).to.deep.equal(action1);
+        expect(safeParseAction(action1)).to.deep.equal({
+            success: true,
+            data: action1,
+        });
     });
 
     test('A basic example of each kind of action will be safely parsed', () => {

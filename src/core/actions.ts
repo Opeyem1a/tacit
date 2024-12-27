@@ -4,8 +4,9 @@ import {
     assertActionInputIsValid,
     assertActionIsObject,
     assertActionKindIsValid,
-    assertActionPriorityIsValid, assertActionSelectIsValid
-} from "./assertions";
+    assertActionPriorityIsValid,
+    assertActionSelectIsValid,
+} from './assertions';
 
 export interface TriggeredInput {
     selector: string;
