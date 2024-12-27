@@ -5,3 +5,4 @@
 .prettierignore
 tailwind.config.js
 eslint.config.mjs
+.github
